@@ -1,0 +1,1 @@
+wget -O hemi.sh https://raw.githubusercontent.com/breaddog100/hemi/main/hemi.sh && chmod +x hemi.sh && ./hemi.sh
