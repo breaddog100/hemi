@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 设置版本号
-current_version=20241018008
+current_version=20241018010
 
 update_script() {
     # 指定URL
@@ -60,7 +60,6 @@ function install_node() {
     go version
 
 	# 下载代码
-	# 查看下代码仓库结构，做成不指定版本的
 	# wget https://github.com/hemilabs/heminetwork/releases/download/v0.4.5/heminetwork_v0.4.5_linux_amd64.tar.gz
 	# tar -xvf heminetwork_v0.4.5_linux_amd64.tar.gz
 	# mv heminetwork_v0.4.5_linux_amd64 heminetwork
@@ -80,7 +79,7 @@ Description=Hemi Network App Service
 [Service]
 Type=simple
 Restart=always
-RestartSec=5s
+RestartSec=30s
 WorkingDirectory=$HOME/heminetwork
 Environment=POPM_BTC_PRIVKEY=$POPM_BTC_PRIVKEY
 Environment=POPM_STATIC_FEE=$POPM_STATIC_FEE
@@ -124,9 +123,11 @@ function update_gas(){
     cd $HOME
 	FEE=$(curl -s https://mempool.space/api/v1/fees/recommended | sed -n 's/.*"fastestFee":\([0-9.]*\).*/\1/p')
 	read -p "设置gas(当前参考值：$FEE)：" POPM_STATIC_FEE
-    sed -i "s/Environment=POPM_STATIC_FEE=[0-9.]\+/Environment=POPM_STATIC_FEE=$POPM_STATIC_FEE/" /lib/systemd/system/hemi.service
+    sudo sed -i "s/Environment=POPM_STATIC_FEE=[0-9.]\+/Environment=POPM_STATIC_FEE=$POPM_STATIC_FEE/" /lib/systemd/system/hemi.service
     sudo systemctl daemon-reload
-    sudo systemctl restart hemi
+    echo "修改完成，正在重启节点..."
+    stop_node
+    start_node
 }
 
 # 卸载节点功能
@@ -181,21 +182,24 @@ function main_menu() {
 		echo "Contabo机器如果无法安装请先运行【修复contabo】"
 	    echo "请选择要执行的操作:"
 	    echo "1. 部署节点 install_node"
-	    echo "2. 查看日志 view_logs"
-	    echo "3. 停止节点 stop_node"
-	    echo "4. 启动节点 start_node"
-        echo "5. 更新代码 update_code"
+	    echo "2. 节点状态 view_status"
+        echo "3. 节点日志 view_logs"
+	    echo "4. 停止节点 stop_node"
+	    echo "5. 启动节点 start_node"
         echo "6. 修改gas update_gas"
+        echo "7. 更新代码 update_code"
 	    echo "1618. 卸载节点 uninstall_node"
 	    echo "0. 退出脚本 exit"
 	    read -p "请输入选项: " OPTION
 	
 	    case $OPTION in
 	    1) install_node ;;
-	    2) view_logs ;;
-	    3) stop_node ;;
-	    4) start_node ;;
-        5) update_code ;;
+	    2) view_status ;;
+        3) view_logs ;;
+	    4) stop_node ;;
+	    5) start_node ;;
+        6) update_gas ;;
+        7) update_code ;;
 	    1618) uninstall_node ;;
 	    0) echo "退出脚本。"; exit 0 ;;
 	    *) echo "无效选项，请重新输入。"; sleep 3 ;;
