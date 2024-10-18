@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 设置版本号
-current_version=20241018006
+current_version=20241018008
 
 update_script() {
     # 指定URL
@@ -74,8 +74,6 @@ function install_node() {
 
 	POPM_BFG_URL="wss://testnet.rpc.hemi.network/v1/ws/public"
 	
-	export POPM_STATIC_FEE=$POPM_STATIC_FEE
-	
     sudo tee /lib/systemd/system/hemi.service > /dev/null <<EOF
 [Unit]
 Description=Hemi Network App Service
@@ -85,6 +83,7 @@ Restart=always
 RestartSec=5s
 WorkingDirectory=$HOME/heminetwork
 Environment=POPM_BTC_PRIVKEY=$POPM_BTC_PRIVKEY
+Environment=POPM_STATIC_FEE=$POPM_STATIC_FEE
 Environment=POPM_BFG_URL=$POPM_BFG_URL
 ExecStart=$HOME/heminetwork/bin/popmd
 [Install]
@@ -116,13 +115,18 @@ function stop_node(){
 
 # 启动节点
 function start_node(){
-	cd $HOME
-	FEE=$(curl -s https://mempool.space/api/v1/fees/recommended | sed -n 's/.*"fastestFee":\([0-9.]*\).*/\1/p')
-	read -p "设置gas(当前参考值：$FEE)：" POPM_STATIC_FEE
-    export POPM_STATIC_FEE=$POPM_STATIC_FEE
-
 	sudo systemctl start hemi
 	echo "节点已启动..."
+}
+
+# 更改gas
+function update_gas(){
+    cd $HOME
+	FEE=$(curl -s https://mempool.space/api/v1/fees/recommended | sed -n 's/.*"fastestFee":\([0-9.]*\).*/\1/p')
+	read -p "设置gas(当前参考值：$FEE)：" POPM_STATIC_FEE
+    sed -i "s/Environment=POPM_STATIC_FEE=[0-9.]\+/Environment=POPM_STATIC_FEE=$POPM_STATIC_FEE/" /lib/systemd/system/hemi.service
+    sudo systemctl daemon-reload
+    sudo systemctl restart hemi
 }
 
 # 卸载节点功能
@@ -181,6 +185,7 @@ function main_menu() {
 	    echo "3. 停止节点 stop_node"
 	    echo "4. 启动节点 start_node"
         echo "5. 更新代码 update_code"
+        echo "6. 修改gas update_gas"
 	    echo "1618. 卸载节点 uninstall_node"
 	    echo "0. 退出脚本 exit"
 	    read -p "请输入选项: " OPTION
