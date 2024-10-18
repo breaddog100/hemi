@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 设置版本号
-current_version=20241018011
+current_version=20241018012
 
 update_script() {
     # 指定URL
@@ -179,7 +179,6 @@ function main_menu() {
 		echo "当前版本：$current_version"
 		echo "沟通电报群：https://t.me/lumaogogogo"
 		echo "推荐配置：2C4G100G"
-		echo "Contabo机器如果无法安装请先运行【修复contabo】"
 	    echo "请选择要执行的操作:"
 	    echo "1. 部署节点 install_node"
 	    echo "2. 节点状态 view_status"
