@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 设置版本号
-current_version=20241018001
+current_version=20241018002
 
 update_script() {
     # 指定URL
@@ -197,3 +197,6 @@ function main_menu() {
 
 # 检查更新
 update_script
+
+# 显示主菜单
+main_menu
