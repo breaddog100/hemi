@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 设置版本号
-current_version=20241018002
+current_version=20241018003
 
 update_script() {
     # 指定URL
@@ -44,11 +44,12 @@ update_script() {
 function install_node() {
 
 	cd $HOME
-	FEE=$(curl -s https://mempool.space/api/v1/fees/recommended | jq '.fastestFee')
-	read -p "设置gas(当前参考值：$FEE)：" POPM_STATIC_FEE
 
     sudo apt update
     sudo apt install -y jq git make
+
+    FEE=$(curl -s https://mempool.space/api/v1/fees/recommended | jq '.fastestFee')
+	read -p "设置gas(当前参考值：$FEE)：" POPM_STATIC_FEE
 
     # 安装GO
     sudo rm -rf /usr/local/go
