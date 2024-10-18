@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 设置版本号
-current_version=20241018005
+current_version=20241018006
 
 update_script() {
     # 指定URL
@@ -49,7 +49,7 @@ function install_node() {
     read -p "设置gas(当前参考值：$FEE)：" POPM_STATIC_FEE
 
     sudo apt update
-    sudo apt install -y git make
+    sudo apt install -y jq git make
 
     # 安装GO
     sudo rm -rf /usr/local/go
