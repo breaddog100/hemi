@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 设置版本号
-current_version=20241018003
+current_version=20241018005
 
 update_script() {
     # 指定URL
@@ -45,11 +45,11 @@ function install_node() {
 
 	cd $HOME
 
-    sudo apt update
-    sudo apt install -y jq git make
+    FEE=$(curl -s https://mempool.space/api/v1/fees/recommended | sed -n 's/.*"fastestFee":\([0-9.]*\).*/\1/p')
+    read -p "设置gas(当前参考值：$FEE)：" POPM_STATIC_FEE
 
-    FEE=$(curl -s https://mempool.space/api/v1/fees/recommended | jq '.fastestFee')
-	read -p "设置gas(当前参考值：$FEE)：" POPM_STATIC_FEE
+    sudo apt update
+    sudo apt install -y git make
 
     # 安装GO
     sudo rm -rf /usr/local/go
@@ -69,7 +69,7 @@ function install_node() {
     make deps
     make install
 
-	./keygen -secp256k1 -json -net="testnet" > popm-address.json
+	./bin/keygen -secp256k1 -json -net="testnet" > popm-address.json
 	POPM_BTC_PRIVKEY=$(jq -r '.private_key' popm-address.json)
 
 	POPM_BFG_URL="wss://testnet.rpc.hemi.network/v1/ws/public"
@@ -86,7 +86,7 @@ RestartSec=5s
 WorkingDirectory=$HOME/heminetwork
 Environment=POPM_BTC_PRIVKEY=$POPM_BTC_PRIVKEY
 Environment=POPM_BFG_URL=$POPM_BFG_URL
-ExecStart=$HOME/heminetwork/popmd
+ExecStart=$HOME/heminetwork/bin/popmd
 [Install]
 WantedBy=multi-user.target
 EOF
@@ -117,24 +117,30 @@ function stop_node(){
 # 启动节点
 function start_node(){
 	cd $HOME
-	FEE=$(curl -s https://mempool.space/api/v1/fees/recommended | jq '.fastestFee')
+	FEE=$(curl -s https://mempool.space/api/v1/fees/recommended | sed -n 's/.*"fastestFee":\([0-9.]*\).*/\1/p')
 	read -p "设置gas(当前参考值：$FEE)：" POPM_STATIC_FEE
+    export POPM_STATIC_FEE=$POPM_STATIC_FEE
+
 	sudo systemctl start hemi
 	echo "节点已启动..."
 }
 
-# 卸载节点
-function uninstall_node(){
-    sudo systemctl stop hemi
-	rm -rf $HOME/heminetwork
-	echo "卸载完成..."
-}
+# 卸载节点功能
+function uninstall_node() {
+    echo "确定要卸载节点程序吗？这将会删除所有相关的数据。[Y/N]"
+    read -r -p "请确认: " response
 
-# contabo
-function contabo(){
-	echo "DNS=8.8.8.8 8.8.4.4" | sudo tee -a /etc/systemd/resolved.conf > /dev/null
-	sudo systemctl restart systemd-resolved
-	echo "已修复contabo网络"
+    case "$response" in
+        [yY][eE][sS]|[yY]) 
+            echo "开始卸载节点程序..."
+            sudo systemctl stop hemi
+	        rm -rf $HOME/heminetwork
+            echo "节点程序卸载完成。"
+            ;;
+        *)
+            echo "取消卸载操作。"
+            ;;
+    esac
 }
 
 # 代码更新
@@ -175,7 +181,6 @@ function main_menu() {
 	    echo "3. 停止节点 stop_node"
 	    echo "4. 启动节点 start_node"
         echo "5. 更新代码 update_code"
-	    echo "1600. 修复contabo contabo"
 	    echo "1618. 卸载节点 uninstall_node"
 	    echo "0. 退出脚本 exit"
 	    read -p "请输入选项: " OPTION
@@ -186,7 +191,6 @@ function main_menu() {
 	    3) stop_node ;;
 	    4) start_node ;;
         5) update_code ;;
-	    1600) contabo ;;
 	    1618) uninstall_node ;;
 	    0) echo "退出脚本。"; exit 0 ;;
 	    *) echo "无效选项，请重新输入。"; sleep 3 ;;
