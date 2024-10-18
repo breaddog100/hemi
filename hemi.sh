@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 设置版本号
-current_version=20241018010
+current_version=20241018011
 
 update_script() {
     # 指定URL
@@ -162,12 +162,12 @@ update_code () {
     local updates=$(git log HEAD..origin/main --oneline)
 
     if [ -n "$updates" ]; then
-        echo "Updates found:"
+        echo "发现新代码:"
         echo "$updates"
-        echo "Updating local repository..."
+        echo "正在更新..."
         git pull origin main
     else
-        echo "Local repository is already up-to-date."
+        echo "完成更新..."
     fi
 }
 
