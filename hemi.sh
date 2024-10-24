@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 设置版本号
-current_version=20241023001
+current_version=20241024001
 
 update_script() {
     # 指定URL
@@ -45,7 +45,7 @@ function install_node() {
 
 	cd $HOME
 
-    FEE=$(curl -s https://mempool.space/api/v1/fees/recommended | sed -n 's/.*"fastestFee":\([0-9.]*\).*/\1/p')
+    FEE=$(curl -s https://mempool.space/testnet/api/v1/fees/recommended | sed -n 's/.*"fastestFee":\([0-9.]*\).*/\1/p')
     read -p "设置gas(当前参考值：$FEE)：" POPM_STATIC_FEE
 
     sudo apt update
