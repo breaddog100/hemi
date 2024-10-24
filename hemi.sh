@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 设置版本号
-current_version=20241024002
+current_version=20241024003
 
 update_script() {
     # 指定URL
@@ -70,6 +70,7 @@ function install_node() {
 
 	./bin/keygen -secp256k1 -json -net="testnet" > popm-address.json
 	POPM_BTC_PRIVKEY=$(jq -r '.private_key' popm-address.json)
+    POPM_BTC_PUBKEY=$(jq -r '.pubkey_hash' popm-address.json)
 
 	POPM_BFG_URL="wss://testnet.rpc.hemi.network/v1/ws/public"
 	
@@ -93,7 +94,7 @@ EOF
     sudo systemctl enable hemi
     sudo systemctl start hemi
 
-	echo "部署完成..."
+    printf "\033[31m部署完成，请给：%s，领水\033[0m\n" "$POPM_BTC_PUBKEY"
 }
 
 # 查看日志
