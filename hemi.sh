@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 设置版本号
-current_version=20241024001
+current_version=20241024002
 
 update_script() {
     # 指定URL
@@ -46,7 +46,7 @@ function install_node() {
 	cd $HOME
 
     FEE=$(curl -s https://mempool.space/testnet/api/v1/fees/recommended | sed -n 's/.*"fastestFee":\([0-9.]*\).*/\1/p')
-    read -p "设置gas(当前参考值：$FEE)：" POPM_STATIC_FEE
+    read -p "设置gas(参考值：$FEE)：" POPM_STATIC_FEE
 
     sudo apt update
     sudo apt install -y jq git make
@@ -122,7 +122,9 @@ function start_node(){
 function update_gas(){
     cd $HOME
 	FEE=$(curl -s https://mempool.space/testnet/api/v1/fees/recommended | sed -n 's/.*"fastestFee":\([0-9.]*\).*/\1/p')
-	read -p "设置gas(当前参考值：$FEE)：" POPM_STATIC_FEE
+    ORE_FEE=$(grep -oP 'POPM_STATIC_FEE=\K[^ ]+' /lib/systemd/system/hemi.service)
+
+	read -p "设置gas(当前值：$ORE_FEE,参考值：$FEE)：" POPM_STATIC_FEE
     sudo sed -i "s/Environment=POPM_STATIC_FEE=[0-9.]\+/Environment=POPM_STATIC_FEE=$POPM_STATIC_FEE/" /lib/systemd/system/hemi.service
     sudo systemctl daemon-reload
     echo "修改完成，正在重启节点..."
