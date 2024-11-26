@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 设置版本号
-current_version=20241024003
+current_version=20241127001
 
 update_script() {
     # 指定URL
@@ -60,9 +60,6 @@ function install_node() {
     go version
 
 	# 下载代码
-	# wget https://github.com/hemilabs/heminetwork/releases/download/v0.4.5/heminetwork_v0.4.5_linux_amd64.tar.gz
-	# tar -xvf heminetwork_v0.4.5_linux_amd64.tar.gz
-	# mv heminetwork_v0.4.5_linux_amd64 heminetwork
     git clone https://github.com/hemilabs/heminetwork.git
     cd heminetwork
     make deps
@@ -133,6 +130,43 @@ function update_gas(){
     start_node
 }
 
+# 更新程序代码
+function check_and_upgrade {
+    # 进入项目目录
+    project_folder="heminetwork"
+
+    cd ~/$project_folder || { echo "Directory ~/$project_folder does not exist."; exit 1; }
+
+    # 获取本地版本
+    local_version=$(git describe --tags --abbrev=0)
+
+    # 获取远程版本
+    git fetch --tags
+    remote_version=$(git describe --tags $(git rev-list --tags --max-count=1))
+
+    echo "本地程序版本: $local_version"
+    echo "官方程序版本: $remote_version"
+
+    # 比较版本，如果本地版本低于远程版本，则询问用户是否进行升级
+    if [ "$local_version" != "$remote_version" ]; then
+        read -p "发现官方发布了新的程序版本，是否要升级到： $remote_version? (y/n): " confirm
+        if [[ "$confirm" =~ ^[Yy]$ ]]; then
+            echo "正在升级..."
+            stop_node
+            git checkout $remote_version
+            git submodule update --init --recursive
+            make deps
+            make install
+            start_node
+            echo "升级完成，当前本地程序版本： $remote_version."
+        else
+            echo "取消升级，当前本地程序版本： $local_version."
+        fi
+    else
+        echo "已经是最新版本: $local_version."
+    fi
+}
+
 # 卸载节点功能
 function uninstall_node() {
     echo "确定要卸载节点程序吗？这将会删除所有相关的数据。[Y/N]"
@@ -174,6 +208,28 @@ update_code () {
     fi
 }
 
+# 导入钱包
+function import_wallet(){
+    # 进入项目目录
+    project_folder="heminetwork"
+    cd ~/$project_folder || { echo "Directory ~/$project_folder does not exist."; exit 1; }
+
+    echo "当前钱包信息："
+    cat popm-address.json
+
+    read -p "请输入钱包私钥，并确认钱包中有测试币:" import_key
+    echo "$import_key" >> import_key_address.txt
+
+    stop_node
+
+    # 使用 sed 命令替换 POPM_BTC_PRIVKEY 的值
+    sudo sed -i "s|^Environment=POPM_BTC_PRIVKEY=.*|Environment=POPM_BTC_PRIVKEY=${import_key}|" /lib/systemd/system/hemi.service
+
+    sudo systemctl daemon-reload
+    start_node
+
+}
+
 # 主菜单
 function main_menu() {
 	while true; do
@@ -190,6 +246,7 @@ function main_menu() {
 	    echo "5. 启动节点 start_node"
         echo "6. 修改gas update_gas"
         echo "7. 更新代码 update_code"
+        echo "8. 导入钱包 import_wallet"
 	    echo "1618. 卸载节点 uninstall_node"
 	    echo "0. 退出脚本 exit"
 	    read -p "请输入选项: " OPTION
@@ -202,6 +259,7 @@ function main_menu() {
 	    5) start_node ;;
         6) update_gas ;;
         7) update_code ;;
+        8) import_wallet ;;
 	    1618) uninstall_node ;;
 	    0) echo "退出脚本。"; exit 0 ;;
 	    *) echo "无效选项，请重新输入。"; sleep 3 ;;
