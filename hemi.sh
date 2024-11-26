@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 设置版本号
-current_version=20241127001
+current_version=20241127002
 
 update_script() {
     # 指定URL
@@ -214,17 +214,11 @@ function import_wallet(){
     project_folder="heminetwork"
     cd ~/$project_folder || { echo "Directory ~/$project_folder does not exist."; exit 1; }
 
-    echo "当前钱包信息："
-    cat popm-address.json
-
     read -p "请输入钱包私钥，并确认钱包中有测试币:" import_key
     echo "$import_key" >> import_key_address.txt
 
     stop_node
-
-    # 使用 sed 命令替换 POPM_BTC_PRIVKEY 的值
     sudo sed -i "s|^Environment=POPM_BTC_PRIVKEY=.*|Environment=POPM_BTC_PRIVKEY=${import_key}|" /lib/systemd/system/hemi.service
-
     sudo systemctl daemon-reload
     start_node
 
